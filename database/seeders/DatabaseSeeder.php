@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Models\Profile;
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\Product;
+use App\Models\Order;
 
 class DatabaseSeeder extends Seeder
 {
@@ -91,5 +93,77 @@ class DatabaseSeeder extends Seeder
         $post2->categories()->attach([$cat2->id]); // صحة
         $post3->categories()->attach([$cat1->id, $cat3->id]); // تقنية، تعليم
         $post4->categories()->attach([$cat4->id, $cat1->id]); // رياضة، تقنية
+
+        // Products
+        $product1 = Product::create([
+            'name' => 'لابتوب ديل',
+            'price' => 3500.00,
+            'description' => 'لابتوب ديل عالي الأداء',
+            'image' => 'laptop.jpg',
+            'status' => 'available',
+        ]);
+        $product2 = Product::create([
+            'name' => 'هاتف سامسونج',
+            'price' => 2000.00,
+            'description' => 'هاتف سامسونج جالاكسي',
+            'image' => 'phone.jpg',
+            'status' => 'available',
+        ]);
+        $product3 = Product::create([
+            'name' => 'ماوس لاسلكي',
+            'price' => 150.00,
+            'description' => 'ماوس لاسلكي مريح',
+            'image' => 'mouse.jpg',
+            'status' => 'available',
+        ]);
+        $product4 = Product::create([
+            'name' => 'لوحة مفاتيح ميكانيكية',
+            'price' => 450.00,
+            'description' => 'لوحة مفاتيح ميكانيكية RGB',
+            'image' => 'keyboard.jpg',
+            'status' => 'available',
+        ]);
+        $product5 = Product::create([
+            'name' => 'شاشة 27 بوصة',
+            'price' => 1200.00,
+            'description' => 'شاشة 4K للألعاب',
+            'image' => 'monitor.jpg',
+            'status' => 'out_of_stock',
+        ]);
+
+        // Orders
+        $order1 = Order::create([
+            'user_id' => $user1->id,
+            'status' => 'pending',
+            'total_amount' => 0,
+        ]);
+        $order1->products()->attach([
+            $product1->id => ['quantity' => 1, 'price' => $product1->price],
+            $product3->id => ['quantity' => 2, 'price' => $product3->price],
+        ]);
+        $order1->update(['total_amount' => (1 * $product1->price) + (2 * $product3->price)]);
+
+        $order2 = Order::create([
+            'user_id' => $user2->id,
+            'status' => 'completed',
+            'total_amount' => 0,
+        ]);
+        $order2->products()->attach([
+            $product2->id => ['quantity' => 1, 'price' => $product2->price],
+            $product4->id => ['quantity' => 1, 'price' => $product4->price],
+        ]);
+        $order2->update(['total_amount' => (1 * $product2->price) + (1 * $product4->price)]);
+
+        $order3 = Order::create([
+            'user_id' => $user3->id,
+            'status' => 'pending',
+            'total_amount' => 0,
+        ]);
+        $order3->products()->attach([
+            $product1->id => ['quantity' => 2, 'price' => $product1->price],
+            $product2->id => ['quantity' => 1, 'price' => $product2->price],
+            $product3->id => ['quantity' => 3, 'price' => $product3->price],
+        ]);
+        $order3->update(['total_amount' => (2 * $product1->price) + (1 * $product2->price) + (3 * $product3->price)]);
     }
 }
