@@ -37,36 +37,25 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'products' => 'required|array',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.quantity' => 'required|integer|min:1',
-        ]);
-
         $order = Order::create([
-            'user_id' => $validated['user_id'],
+            'user_id' => $request->user_id,
             'status' => $request->input('status', 'pending'),
             'total_amount' => 0,
         ]);
 
         $totalAmount = 0;
-        $pivotData = [];
 
-        foreach ($validated['products'] as $productData) {
-            $product = Product::find($productData['product_id']);
-            $quantity = $productData['quantity'];
-            $price = $product->price;
+        foreach ($request->products as $item) {
+            $product = Product::find($item['product_id']);
 
-            $pivotData[$productData['product_id']] = [
-                'quantity' => $quantity,
-                'price' => $price,
-            ];
+            $order->products()->attach($product->id, [
+                'quantity' => $item['quantity'],
+                'price' => $product->price,
+            ]);
 
-            $totalAmount += $price * $quantity;
+            $totalAmount += $product->price * $item['quantity'];
         }
 
-        $order->products()->attach($pivotData);
         $order->update(['total_amount' => $totalAmount]);
 
         $order->load('products');
