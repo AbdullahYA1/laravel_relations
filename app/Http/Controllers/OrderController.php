@@ -97,19 +97,38 @@ class OrderController extends Controller
      */
     public function update(Request $request, Order $order)
     {
-        $order->update($request->all());
+        $validated = $request->validate([
+            'status' => 'sometimes|in:pending,completed,canceled',
+            'products' => 'sometimes|array',
+            'products.*.product_id' => 'required_with:products|exists:products,id',
+            'products.*.quantity' => 'required_with:products|integer|min:1',
+        ]);
 
-        // Sync products if provided
-        if ($request->has('product_ids')) {
-            $order->products()->sync($request->input('product_ids'));
+        if (isset($validated['status'])) {
+            $order->status = $validated['status'];
         }
 
+        if (isset($validated['products'])) {
+            $pivotData = [];
+            $totalAmount = 0;
+            foreach ($validated['products'] as $productData) {
+                $product = Product::find($productData['product_id']);
+                $quantity = $productData['quantity'];
+                $price = $product->price;
+                $pivotData[$productData['product_id']] = ['quantity' => $quantity, 'price' => $price];
+                $totalAmount += $price * $quantity;
+            }
+            $order->products()->sync($pivotData);
+            $order->total_amount = $totalAmount;
+        }
+
+        $order->save();
         $order->load('products');
         return response()->json([
             'status' => 'success',
             'message' => 'Order updated successfully',
             'data' => $order
-        ]);
+        ], 200);
     }
 
     /**
